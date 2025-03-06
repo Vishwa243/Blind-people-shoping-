@@ -1,0 +1,306 @@
+from flask import Flask, render_template, flash, request, session
+import mysql.connector
+
+app = Flask(__name__)
+app.config['DEBUG']
+app.config['SECRET_KEY'] = '7d441f27d441f27567d441f2b6176a'
+
+
+@app.route("/")
+def homepage():
+    return render_template('index.html')
+
+
+@app.route("/Home")
+def Home():
+    return render_template('index.html')
+
+
+@app.route("/AdminLogin")
+def DoctorLogin():
+    return render_template('AdminLogin.html')
+
+
+@app.route("/UserLogin")
+def UserLogin():
+    return render_template('UserLogin.html')
+
+
+@app.route("/NewUser")
+def NewUser():
+    return render_template('NewUser.html')
+
+
+@app.route("/NewProduct")
+def NewProduct():
+    return render_template('NewProduct.html')
+
+
+@app.route("/AdminHome")
+def AdminHome():
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM regtb  ")
+    data = cur.fetchall()
+    return render_template('AdminHome.html', data=data)
+
+
+@app.route("/AProductInfo")
+def AProductInfo():
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM protb   ")
+    data = cur.fetchall()
+    return render_template('AProductInfo.html', data=data)
+
+
+@app.route("/adminlogin", methods=['GET', 'POST'])
+def adminlogin():
+    if request.method == 'POST':
+        if request.form['uname'] == 'admin' or request.form['password'] == 'admin':
+
+            conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM regtb ")
+            data = cur.fetchall()
+            flash("Login successfully")
+            return render_template('AdminHome.html', data=data)
+
+        else:
+            flash("UserName Or Password Incorrect!")
+            return render_template('AdminLogin.html')
+
+
+@app.route("/ARemove")
+def ARemove():
+    id = request.args.get('id')
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+    cursor = conn.cursor()
+    cursor.execute(
+        "delete from protb where id='" + id + "'")
+    conn.commit()
+    conn.close()
+
+    flash('Product  info Remove Successfully!')
+
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM protb  ")
+    data = cur.fetchall()
+    return render_template('AProductInfo.html', data=data)
+
+
+@app.route("/newproduct", methods=['GET', 'POST'])
+def newproduct():
+    if request.method == 'POST':
+        pname = request.form['pname']
+        ptype = request.form['ptype']
+        price = request.form['price']
+        qty = request.form['qty']
+        info = request.form['info']
+        size = request.form['size']
+
+        import random
+        file = request.files['file']
+        fnew = random.randint(1111, 9999)
+        savename = str(fnew) + ".png"
+        file.save("static/upload/" + savename)
+
+        conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO  protb VALUES ('','" + pname + "','" + ptype + "','" + size + "','" + price + "','" + qty + "','" + info + "','" + savename + "')")
+        conn.commit()
+        conn.close()
+
+    flash('Product Register successfully')
+    return render_template('NewProduct.html')
+
+
+@app.route("/EProductInfo")
+def EProductInfo():
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM protb  ")
+    data = cur.fetchall()
+    return render_template('EProductInfo.html', data=data)
+
+
+@app.route("/Remove")
+def Remove():
+    id = request.args.get('id')
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+    cursor = conn.cursor()
+    cursor.execute(
+        "delete from protb where id='" + id + "'")
+    conn.commit()
+    conn.close()
+
+    flash('Product  info Remove Successfully!')
+
+    conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM protb  ")
+    data = cur.fetchall()
+    return render_template('EProductInfo.html', data=data)
+
+
+@app.route("/newuser", methods=['GET', 'POST'])
+def newuser():
+    if request.method == 'POST':
+        name = request.form['name']
+        mobile = request.form['mobile']
+
+        email = request.form['email']
+
+        address = request.form['address']
+
+        uname = request.form['uname']
+        password = request.form['password']
+
+        conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO regtb VALUES ('" + name + "','" + email + "','" + mobile + "','" + address + "','" + uname + "','" + password + "')")
+        conn.commit()
+        conn.close()
+        flash('User Register successfully')
+
+    return render_template('UserLogin.html')
+
+
+@app.route("/userlogin", methods=['GET', 'POST'])
+def userlogin():
+    if request.method == 'POST':
+        username = request.form['uname']
+        password = request.form['password']
+        session['uname'] = request.form['uname']
+
+        conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * from regtb where username='" + username + "' and Password='" + password + "'")
+        data = cursor.fetchone()
+        if data is None:
+
+            flash('Username or Password is wrong')
+            return render_template('UserLogin.html')
+        else:
+
+            conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM regtb where username='" + username + "' and Password='" + password + "'")
+            data = cur.fetchall()
+            flash("Login successfully")
+
+            return render_template('UserHome.html', data=data)
+
+
+@app.route("/Camera")
+def Camera():
+    import cv2
+    import mediapipe as mp
+
+    # Initialize MediaPipe Pose
+    mp_pose = mp.solutions.pose
+    pose = mp_pose.Pose()
+
+    # Open webcam feed
+    cap = cv2.VideoCapture(0)
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            continue
+
+        # Convert BGR image to RGB
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Process the frame and get pose landmarks
+        results = pose.process(rgb_frame)
+
+        if results.pose_landmarks:
+            landmarks = results.pose_landmarks.landmark
+
+            # Get left & right shoulder landmarks
+            left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
+            right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+
+            # Get left & right hip landmarks
+            left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
+            right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP]
+
+            if left_shoulder and right_shoulder and left_hip and right_hip:
+                # Convert normalized coordinates to image coordinates
+                left_shoulder_x, left_shoulder_y = int(left_shoulder.x * frame.shape[1]), int(
+                    left_shoulder.y * frame.shape[0])
+                right_shoulder_x, right_shoulder_y = int(right_shoulder.x * frame.shape[1]), int(
+                    right_shoulder.y * frame.shape[0])
+
+                left_hip_x, left_hip_y = int(left_hip.x * frame.shape[1]), int(left_hip.y * frame.shape[0])
+                right_hip_x, right_hip_y = int(right_hip.x * frame.shape[1]), int(right_hip.y * frame.shape[0])
+
+                # Draw circles at shoulder points (Green)
+                cv2.circle(frame, (left_shoulder_x, left_shoulder_y), 10, (0, 255, 0), -1)
+                cv2.circle(frame, (right_shoulder_x, right_shoulder_y), 10, (0, 255, 0), -1)
+
+                # Draw circles at hip points (Blue)
+                cv2.circle(frame, (left_hip_x, left_hip_y), 10, (255, 0, 0), -1)
+                cv2.circle(frame, (right_hip_x, right_hip_y), 10, (255, 0, 0), -1)
+
+                # Display coordinates
+                cv2.putText(frame, f"LS ({left_shoulder_x}, {left_shoulder_y})",
+                            (left_shoulder_x + 10, left_shoulder_y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                cv2.putText(frame, f"RS ({right_shoulder_x}, {right_shoulder_y})",
+                            (right_shoulder_x + 10, right_shoulder_y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+                cv2.putText(frame, f"LH ({left_hip_x}, {left_hip_y})", (left_hip_x + 10, left_hip_y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                cv2.putText(frame, f"RH ({right_hip_x}, {right_hip_y})", (right_hip_x + 10, right_hip_y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+        # Display the frame with detected points
+        cv2.imshow('Shoulder and Hip Detection', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Release video capture and close OpenCV windows
+    cap.release()
+    cv2.destroyAllWindows()
+
+    return render_template('index.html')
+
+
+@app.route("/Update")
+def Update():
+    uid = request.args.get('uid')
+    session["uid"] = uid
+
+    return render_template('Update.html')
+
+
+@app.route("/update", methods=['GET', 'POST'])
+def update():
+    if request.method == 'POST':
+        price = request.form['price']
+        Qty = request.form['qty']
+        date = request.form['date']
+
+        conn = mysql.connector.connect(user='root', password='', host='localhost', database='1virtualtryondb')
+        cursor = conn.cursor()
+        cursor.execute(
+            "update protb set price='" + price + "',Qty='" + Qty + "',exdate='" + date + "' where id='" + session[
+                'uid'] + "' ")
+        conn.commit()
+        conn.close()
+
+        flash('Product Info Update')
+
+        return render_template('AProductInfo.html')
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True, use_reloader=True)
